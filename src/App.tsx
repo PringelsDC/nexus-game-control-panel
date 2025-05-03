@@ -18,6 +18,7 @@ import ServerDetails from "./pages/ServerDetails";
 import CreateServer from "./pages/CreateServer";
 import Subscription from "./pages/Subscription";
 import Settings from "./pages/Settings";
+import ApiSettings from "./pages/ApiSettings";
 
 // Admin Pages
 import AdminUserList from "./pages/admin/AdminUserList";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/servers/:id" element={<Layout requireAuth><ServerDetails /></Layout>} />
               <Route path="/plans" element={<Layout requireAuth><Subscription /></Layout>} />
               <Route path="/settings" element={<Layout requireAuth><Settings /></Layout>} />
+              <Route path="/api-settings" element={<Layout requireAuth><ApiSettings /></Layout>} />
 
               {/* Admin Routes */}
               <Route path="/admin/users" element={<Layout requireAuth requireAdmin><AdminUserList /></Layout>} />

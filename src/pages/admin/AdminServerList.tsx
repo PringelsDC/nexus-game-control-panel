@@ -8,14 +8,27 @@ import { Badge } from '@/components/ui/badge';
 import { useServer } from '@/contexts/ServerContext';
 import { RefreshCw, Search, Server } from 'lucide-react';
 import { toast } from 'sonner';
+import * as xmanageApi from '@/services/xmanageApi';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const AdminServerList = () => {
   const { servers, loading, refreshServerData } = useServer();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredServers, setFilteredServers] = useState(servers);
-
+  const [isApiConnected, setIsApiConnected] = useState(xmanageApi.hasApiKey());
+  const [apiKey, setApiKey] = useState('');
+  
   useEffect(() => {
     setFilteredServers(servers);
+    setIsApiConnected(xmanageApi.hasApiKey());
   }, [servers]);
 
   const handleSearch = () => {
@@ -34,6 +47,23 @@ const AdminServerList = () => {
   const handleRefresh = () => {
     refreshServerData();
     toast.success('Server list refreshed');
+  };
+
+  const handleConfigureApi = () => {
+    if (!apiKey.trim()) {
+      toast.error('Please enter a valid API key');
+      return;
+    }
+    
+    try {
+      xmanageApi.setApiKey(apiKey);
+      setIsApiConnected(true);
+      toast.success('XManage API configured successfully');
+      refreshServerData();
+    } catch (error) {
+      console.error('Error configuring XManage API:', error);
+      toast.error('Failed to configure XManage API');
+    }
   };
   
   const getStatusClass = (status: string) => {
@@ -75,6 +105,36 @@ const AdminServerList = () => {
         </div>
       </div>
       
+      {!isApiConnected && (
+        <Card className="bg-amber-500/10 border-amber-500/20 mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-amber-500">XManage API Not Configured</CardTitle>
+            <CardDescription>
+              Configure your XManage API to manage real servers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-1 block">API Key</label>
+                <Input 
+                  type="text" 
+                  placeholder="Enter your XManage API key" 
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleConfigureApi}>
+                Configure API
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              To get an API key, use the "xmanage api key generate" command.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="flex items-center space-x-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -97,84 +157,86 @@ const AdminServerList = () => {
         <CardHeader className="pb-2">
           <CardTitle>All Servers</CardTitle>
           <CardDescription>
-            Total servers: {filteredServers.length}
+            Total servers: {filteredServers.length} {!isApiConnected && '(Demo Data)'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <div className="grid grid-cols-12 bg-muted/50 py-2 px-4">
-              <div className="col-span-3 font-medium text-sm">Server Name</div>
-              <div className="col-span-2 font-medium text-sm">Status</div>
-              <div className="col-span-2 font-medium text-sm">RAM</div>
-              <div className="col-span-2 font-medium text-sm">CPU</div>
-              <div className="col-span-1 font-medium text-sm">Port</div>
-              <div className="col-span-2 font-medium text-sm">Actions</div>
-            </div>
-            
-            <div className="divide-y">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[250px]">Server Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>RAM</TableHead>
+                <TableHead>CPU</TableHead>
+                <TableHead>Port</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filteredServers.length > 0 ? filteredServers.map((server) => (
-                <div key={server.id} className="grid grid-cols-12 py-3 px-4">
-                  <div className="col-span-3 flex items-center">
-                    <Server className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{server.name}</span>
-                  </div>
-                  
-                  <div className="col-span-2 text-sm flex items-center">
-                    <div className={`w-2 h-2 rounded-full ${getStatusClass(server.status)} mr-2`}></div>
-                    <span className="capitalize">{server.status}</span>
-                  </div>
-                  
-                  <div className="col-span-2 text-sm flex items-center">
+                <TableRow key={server.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center">
+                      <Server className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {server.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <div className={`w-2 h-2 rounded-full ${getStatusClass(server.status)} mr-2`}></div>
+                      <span className="capitalize">{server.status}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <div className="w-full">
                       <div className="flex justify-between text-xs">
                         <span>{server.resources.ram.used} MB</span>
                         <span>{server.resources.ram.total} MB</span>
                       </div>
-                      <div className="resource-bar h-1.5 mt-1">
+                      <div className="h-1.5 mt-1 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="resource-bar-fill"
+                          className="h-full bg-game-primary rounded-full"
                           style={{ width: `${Math.round((server.resources.ram.used / server.resources.ram.total) * 100)}%` }}
                         ></div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="col-span-2 text-sm flex items-center">
+                  </TableCell>
+                  <TableCell>
                     <div className="w-full">
                       <div className="flex justify-between text-xs">
                         <span>{server.resources.cpu.used.toFixed(1)}</span>
                         <span>{server.resources.cpu.total}</span>
                       </div>
-                      <div className="resource-bar h-1.5 mt-1">
+                      <div className="h-1.5 mt-1 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="resource-bar-fill"
+                          className="h-full bg-game-primary rounded-full"
                           style={{ width: `${Math.round((server.resources.cpu.used / server.resources.cpu.total) * 100)}%` }}
                         ></div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="col-span-1 text-sm flex items-center">
+                  </TableCell>
+                  <TableCell>
                     {server.port}
-                  </div>
-                  
-                  <div className="col-span-2 flex items-center space-x-2">
+                  </TableCell>
+                  <TableCell>
                     <Link to={`/servers/${server.id}`}>
                       <Button variant="outline" size="sm">
                         Manage
                       </Button>
                     </Link>
-                  </div>
-                </div>
+                  </TableCell>
+                </TableRow>
               )) : (
-                <div className="py-8 text-center">
-                  <Server className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium mb-2">No servers found</h3>
-                  <p className="text-muted-foreground">Try a different search term</p>
-                </div>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Server className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-medium mb-2">No servers found</h3>
+                    <p className="text-muted-foreground">Try a different search term</p>
+                  </TableCell>
+                </TableRow>
               )}
-            </div>
-          </div>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       
@@ -191,7 +253,7 @@ const AdminServerList = () => {
                 {servers.filter(server => server.status === 'online').length}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {Math.round((servers.filter(server => server.status === 'online').length / servers.length) * 100)}% of total
+                {Math.round((servers.filter(server => server.status === 'online').length / servers.length) * 100) || 0}% of total
               </div>
             </div>
             

@@ -7,10 +7,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Server, RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import * as xmanageApi from '../services/xmanageApi';
+import { toast } from 'sonner';
 
 const ServerList = () => {
   const { userServers, loading, refreshServerData } = useServer();
   const { user } = useAuth();
+  const isApiConnected = xmanageApi.hasApiKey();
 
   useEffect(() => {
     refreshServerData();
@@ -25,13 +28,13 @@ const ServerList = () => {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'online':
-        return 'server-status-online';
+        return 'w-2 h-2 rounded-full bg-green-500';
       case 'offline':
-        return 'server-status-offline';
+        return 'w-2 h-2 rounded-full bg-red-500';
       case 'starting':
-        return 'server-status-starting';
+        return 'w-2 h-2 rounded-full bg-yellow-500';
       default:
-        return '';
+        return 'w-2 h-2 rounded-full bg-gray-500';
     }
   };
   
@@ -81,6 +84,14 @@ const ServerList = () => {
           )}
         </div>
       </div>
+      
+      {!isApiConnected && (
+        <Card className="bg-blue-500/10 border-blue-500/20 mb-6">
+          <CardContent className="p-4 text-sm">
+            You're viewing demo servers. Configure the XManage API in the admin panel for real server management.
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-6">
@@ -164,63 +175,65 @@ const renderServerGrid = (servers: any[], loading: boolean, getStatusClass: Func
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {servers.map((server) => (
         <Link to={`/servers/${server.id}`} key={server.id} className="block">
-          <div className="server-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <div className={getStatusClass(server.status)}></div>
-                <h3 className="font-medium">{server.name}</h3>
-              </div>
-              <div className="text-xs px-2 py-1 rounded-full bg-muted">
-                {getStatusLabel(server.status)}
-              </div>
-            </div>
-            
-            <div className="space-y-3 mb-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>RAM</span>
-                  <span>{server.resources.ram.used}MB / {server.resources.ram.total}MB</span>
+          <Card className="h-full hover:border-game-primary/50 transition-colors">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className={`${getStatusClass(server.status)} mr-2`}></div>
+                  <h3 className="font-medium">{server.name}</h3>
                 </div>
-                <div className="resource-bar">
-                  <div
-                    className="resource-bar-fill"
-                    style={{ width: `${(server.resources.ram.used / server.resources.ram.total) * 100}%` }}
-                  ></div>
+                <div className="text-xs px-2 py-1 rounded-full bg-muted">
+                  {getStatusLabel(server.status)}
                 </div>
               </div>
               
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>CPU</span>
-                  <span>{server.resources.cpu.used.toFixed(1)} / {server.resources.cpu.total} vCores</span>
+              <div className="space-y-3 mb-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>RAM</span>
+                    <span>{server.resources.ram.used}MB / {server.resources.ram.total}MB</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-game-primary rounded-full"
+                      style={{ width: `${(server.resources.ram.used / server.resources.ram.total) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="resource-bar">
-                  <div
-                    className="resource-bar-fill"
-                    style={{ width: `${(server.resources.cpu.used / server.resources.cpu.total) * 100}%` }}
-                  ></div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>CPU</span>
+                    <span>{server.resources.cpu.used.toFixed(1)} / {server.resources.cpu.total} vCores</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-game-primary rounded-full"
+                      style={{ width: `${(server.resources.cpu.used / server.resources.cpu.total) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Disk</span>
+                    <span>{(server.resources.disk.used / 1024).toFixed(1)}GB / {(server.resources.disk.total / 1024).toFixed(1)}GB</span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-game-primary rounded-full"
+                      style={{ width: `${(server.resources.disk.used / server.resources.disk.total) * 100}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Disk</span>
-                  <span>{(server.resources.disk.used / 1024).toFixed(1)}GB / {(server.resources.disk.total / 1024).toFixed(1)}GB</span>
-                </div>
-                <div className="resource-bar">
-                  <div
-                    className="resource-bar-fill"
-                    style={{ width: `${(server.resources.disk.used / server.resources.disk.total) * 100}%` }}
-                  ></div>
-                </div>
+              <div className="text-sm text-muted-foreground flex justify-between">
+                <span>Port: {server.port}</span>
+                <span>View Details →</span>
               </div>
-            </div>
-            
-            <div className="text-sm text-muted-foreground flex justify-between">
-              <span>Port: {server.port}</span>
-              <span>View Details →</span>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </Link>
       ))}
     </div>
