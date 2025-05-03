@@ -2,7 +2,7 @@
 // Documentation: https://xmanage-docs.tirito.de/guides/using_api
 
 // API Base URL - configurable via settings
-let API_BASE_URL = localStorage.getItem('xmanageApiUrl') || 'https://xmanage-api.tirito.de'; // Default URL
+let API_BASE_URL = localStorage.getItem('xmanageApiUrl') || 'https://xmanage-api.example.com'; // Default URL
 
 // API Key - in a real implementation, this would be retrieved from a secure storage
 let apiKey: string | null = localStorage.getItem('xmanageApiKey');

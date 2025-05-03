@@ -43,49 +43,6 @@ export const useServer = () => {
   return context;
 };
 
-// Mock data for servers to use as fallback
-const mockServers: Server[] = [
-  {
-    id: '1',
-    name: 'Minecraft Server',
-    status: "online",
-    owner: '1', // Admin's ID
-    resources: {
-      ram: { used: 512, total: 1024 },
-      cpu: { used: 0.5, total: 1 },
-      disk: { used: 3072, total: 5120 },
-    },
-    port: 25565,
-    startupCommand: 'java -Xms512M -Xmx1024M -jar server.jar',
-  },
-  {
-    id: '2',
-    name: 'CS:GO Server',
-    status: "offline",
-    owner: '2', // User's ID
-    resources: {
-      ram: { used: 0, total: 768 },
-      cpu: { used: 0, total: 1 },
-      disk: { used: 2048, total: 4096 },
-    },
-    port: 27015,
-    startupCommand: './srcds_run -game csgo -console -usercon +game_type 0',
-  },
-  {
-    id: '3',
-    name: 'Valheim Server',
-    status: "starting",
-    owner: '2', // User's ID
-    resources: {
-      ram: { used: 384, total: 768 },
-      cpu: { used: 0.8, total: 1 },
-      disk: { used: 1024, total: 3072 },
-    },
-    port: 2456,
-    startupCommand: './valheim_server.x86_64 -name "My Server" -port 2456',
-  }
-];
-
 // Convert XManageServer to our Server interface
 const convertToServer = (xServer: xmanageApi.XManageServer, ownerId: string): Server => {
   // Parse port number from ports string
@@ -108,34 +65,33 @@ const convertToServer = (xServer: xmanageApi.XManageServer, ownerId: string): Se
 };
 
 export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [servers, setServers] = useState<Server[]>(mockServers);
+  const [servers, setServers] = useState<Server[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
-    // Simulate loading server data
+    // Load server data
     const loadServers = async () => {
       setLoading(true);
       try {
         if (xmanageApi.hasApiKey()) {
           const fetchedServers = await xmanageApi.getServers();
-          if (fetchedServers && fetchedServers.length > 0) {
-            const convertedServers = fetchedServers.map(s => convertToServer(s, user?.id || '1'));
-            setServers(convertedServers);
-          } else {
-            // Fallback to mock data if API returns empty
-            setServers(mockServers);
-          }
+          const convertedServers = fetchedServers.map(s => convertToServer(s, user?.id || '1'));
+          setServers(convertedServers);
         } else {
-          // No API key, use mock data
-          setServers(mockServers);
-          console.log('No XManage API key found. Using mock data.');
+          setServers([]);
+          console.log('No XManage API key found. Please configure the API.');
+          toast.error('API not configured. Please set up your XManage API in settings.', {
+            action: {
+              label: 'Configure',
+              onClick: () => window.location.href = '/settings/api'
+            }
+          });
         }
       } catch (error) {
         console.error('Error loading servers:', error);
-        // Fallback to mock data on error
-        setServers(mockServers);
-        toast.error('Failed to load servers. Using demo data.');
+        setServers([]);
+        toast.error('Failed to load servers. Please check your API configuration.');
       } finally {
         setLoading(false);
       }
@@ -190,23 +146,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         toast.success('Server created successfully');
       } else {
-        // Create mock server if no API key
-        const newServer: Server = {
-          id: Math.random().toString(36).substr(2, 9),
-          name,
-          status: "offline",
-          owner: user.id,
-          resources: {
-            ram: { used: 0, total: ram },
-            cpu: { used: 0, total: cpu },
-            disk: { used: 0, total: disk },
-          },
-          port: Math.floor(Math.random() * (30000 - 20000) + 20000),
-          startupCommand,
-        };
-
-        setServers(prev => [...prev, newServer]);
-        toast.success('Server created (Demo Mode)');
+        throw new Error('API not configured. Please set up your XManage API in settings.');
       }
     } catch (error) {
       console.error('Error creating server:', error);
@@ -258,31 +198,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         toast.success('Server starting');
       } else {
-        // Mock implementation
-        setServers(prev => prev.map(server => 
-          server.id === id 
-            ? { ...server, status: "starting" } 
-            : server
-        ));
-        
-        setTimeout(() => {
-          setServers(prev => prev.map(server => 
-            server.id === id 
-              ? { 
-                  ...server, 
-                  status: "online", 
-                  resources: {
-                    ...server.resources,
-                    ram: { ...server.resources.ram, used: Math.floor(server.resources.ram.total * 0.6) },
-                    cpu: { ...server.resources.cpu, used: Math.random() * 0.8 },
-                    disk: { ...server.resources.disk, used: Math.floor(server.resources.disk.used * 1.1) },
-                  }
-                } 
-              : server
-          ));
-          
-          toast.success('Server started (Demo Mode)');
-        }, 3000);
+        throw new Error('API not configured. Please set up your XManage API in settings.');
       }
     } catch (error) {
       console.error('Error starting server:', error);
@@ -316,22 +232,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         toast.success('Server stopped');
       } else {
-        // Mock implementation
-        setServers(prev => prev.map(server => 
-          server.id === id 
-            ? { 
-                ...server, 
-                status: "offline",
-                resources: {
-                  ...server.resources,
-                  ram: { ...server.resources.ram, used: 0 },
-                  cpu: { ...server.resources.cpu, used: 0 },
-                }
-              } 
-            : server
-        ));
-        
-        toast.success('Server stopped (Demo Mode)');
+        throw new Error('API not configured. Please set up your XManage API in settings.');
       }
     } catch (error) {
       console.error('Error stopping server:', error);
@@ -372,9 +273,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }, 5000);
       } else {
-        // Mock implementation
-        await stopServer(id);
-        await startServer(id);
+        throw new Error('API not configured. Please set up your XManage API in settings.');
       }
     } catch (error) {
       console.error('Error restarting server:', error);
@@ -391,9 +290,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setServers(prev => prev.filter(server => server.id !== id));
         toast.success('Server deleted');
       } else {
-        // Mock implementation
-        setServers(prev => prev.filter(server => server.id !== id));
-        toast.success('Server deleted (Demo Mode)');
+        throw new Error('API not configured. Please set up your XManage API in settings.');
       }
     } catch (error) {
       console.error('Error deleting server:', error);
@@ -405,50 +302,26 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const refreshServerData = async () => {
+    if (!xmanageApi.hasApiKey()) return;
+    
     setLoading(true);
     try {
-      if (xmanageApi.hasApiKey()) {
-        const fetchedServers = await xmanageApi.getServers();
-        
-        // Update server statuses
-        const updatedServers = await Promise.all(fetchedServers.map(async (server) => {
-          try {
-            const statusResult = await xmanageApi.getServerStatus(server.id);
-            server.status = statusResult.status;
-          } catch (error) {
-            console.error(`Error fetching status for server ${server.id}:`, error);
-          }
-          return server;
-        }));
-        
-        if (updatedServers && updatedServers.length > 0) {
-          const convertedServers = updatedServers.map(s => convertToServer(s, user?.id || '1'));
-          setServers(convertedServers);
+      const fetchedServers = await xmanageApi.getServers();
+      
+      // Update server statuses
+      const updatedServers = await Promise.all(fetchedServers.map(async (server) => {
+        try {
+          const statusResult = await xmanageApi.getServerStatus(server.id);
+          server.status = statusResult.status;
+        } catch (error) {
+          console.error(`Error fetching status for server ${server.id}:`, error);
         }
-      } else {
-        // Mock implementation - just simulate updating resource usage
-        setServers(prev => prev.map(server => {
-          if (server.status === "online") {
-            return {
-              ...server,
-              resources: {
-                ...server.resources,
-                ram: { 
-                  ...server.resources.ram, 
-                  used: Math.min(
-                    Math.max(300, Math.floor(server.resources.ram.used * (0.9 + Math.random() * 0.2))), 
-                    server.resources.ram.total
-                  ) 
-                },
-                cpu: { 
-                  ...server.resources.cpu, 
-                  used: Math.min(Math.random() * 0.9, server.resources.cpu.total) 
-                },
-              }
-            };
-          }
-          return server;
-        }));
+        return server;
+      }));
+      
+      if (updatedServers && updatedServers.length > 0) {
+        const convertedServers = updatedServers.map(s => convertToServer(s, user?.id || '1'));
+        setServers(convertedServers);
       }
     } catch (error) {
       console.error('Error refreshing server data:', error);

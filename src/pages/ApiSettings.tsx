@@ -29,13 +29,13 @@ const ApiSettings = () => {
       // Show the current API URL
       setApiUrl(xmanageApi.getApiUrl());
     } else {
-      setApiUrl(xmanageApi.getApiUrl() || 'https://xmanage-api.tirito.de');
+      setApiUrl(xmanageApi.getApiUrl() || 'https://xmanage-api.example.com');
     }
     
     // Load Database API settings
     const hasCustomDbUrl = userApi.hasCustomDbUrl();
     setIsDbConnected(hasCustomDbUrl);
-    setDbApiUrl(userApi.getDbApiUrl() || '/api/users');
+    setDbApiUrl(userApi.getDbApiUrl() || 'https://db-api.example.com/users');
   }, []);
 
   const handleSaveApiKey = async () => {
@@ -53,10 +53,10 @@ const ApiSettings = () => {
       // Then save the API key
       xmanageApi.setApiKey(apiKey);
       setIsConnected(true);
-      toast.success('XManage API configured successfully');
       
       // Test the connection
       await xmanageApi.getServers();
+      toast.success('XManage API configured successfully');
     } catch (error) {
       console.error('Error configuring XManage API:', error);
       toast.error('Failed to connect to XManage API. Please check your API key and URL.');
@@ -82,10 +82,10 @@ const ApiSettings = () => {
       // Save the database API URL
       userApi.setDbApiUrl(dbApiUrl.trim());
       setIsDbConnected(true);
-      toast.success('Database API URL configured successfully');
       
       // Test the connection
       await userApi.getAllUsers();
+      toast.success('Database API URL configured successfully');
     } catch (error) {
       console.error('Error configuring Database API:', error);
       toast.error('Failed to connect to Database API. Please check the URL.');
@@ -95,7 +95,7 @@ const ApiSettings = () => {
 
   const handleResetDbApiUrl = () => {
     localStorage.removeItem('dbApiUrl');
-    setDbApiUrl('/api/users');
+    setDbApiUrl('https://db-api.example.com/users');
     setIsDbConnected(false);
     toast.success('Database API URL reset to default');
   };
@@ -188,7 +188,7 @@ const ApiSettings = () => {
                 {!isConnected && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-4">
                     <p className="text-sm">
-                      <span className="font-semibold text-amber-500">Demo Mode Active:</span> Without a valid XManage API key, the panel will use demo data and simulated server management.
+                      <span className="font-semibold text-amber-500">API Not Configured:</span> Please add a valid XManage API URL and key to access real server data.
                     </p>
                   </div>
                 )}
@@ -246,7 +246,7 @@ const ApiSettings = () => {
                       ) : (
                         <>
                           <XCircle className="h-5 w-5 text-red-500 mr-1" />
-                          <span className="text-red-500">Using Default URL</span>
+                          <span className="text-red-500">API Not Configured</span>
                         </>
                       )}
                     </div>
@@ -258,7 +258,7 @@ const ApiSettings = () => {
                       onClick={handleResetDbApiUrl}
                       className="mt-4"
                     >
-                      Reset to Default
+                      Reset API URL
                     </Button>
                   )}
                 </div>
@@ -266,7 +266,7 @@ const ApiSettings = () => {
                 {!isDbConnected && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-4">
                     <p className="text-sm">
-                      <span className="font-semibold text-amber-500">Using Mock Data:</span> Without a custom database API URL, the panel will use mock user data.
+                      <span className="font-semibold text-amber-500">API Not Configured:</span> Please add a valid database API URL to access real user data.
                     </p>
                   </div>
                 )}

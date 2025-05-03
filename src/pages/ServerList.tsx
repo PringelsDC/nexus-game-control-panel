@@ -5,7 +5,7 @@ import { useServer } from '../contexts/ServerContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Server, RefreshCw } from 'lucide-react';
+import { Plus, Server, RefreshCw, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import * as xmanageApi from '../services/xmanageApi';
 import { toast } from 'sonner';
@@ -19,11 +19,13 @@ const ServerList = () => {
     refreshServerData();
     
     const intervalId = setInterval(() => {
-      refreshServerData();
+      if (isApiConnected) {
+        refreshServerData();
+      }
     }, 10000);
     
     return () => clearInterval(intervalId);
-  }, [refreshServerData]);
+  }, [refreshServerData, isApiConnected]);
   
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -55,6 +57,34 @@ const ServerList = () => {
   const offlineServers = userServers.filter(server => server.status === 'offline');
   const startingServers = userServers.filter(server => server.status === 'starting');
 
+  if (!isApiConnected) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Servers</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and monitor all your game servers
+          </p>
+        </div>
+        
+        <Card className="bg-amber-500/10 border-amber-500/20">
+          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+            <Server className="h-16 w-16 text-amber-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">API Not Configured</h2>
+            <p className="text-muted-foreground mb-6 max-w-md">
+              Please configure your XManage API settings to start managing your servers
+            </p>
+            <Link to="/settings/api">
+              <Button className="bg-game-primary hover:bg-game-secondary">
+                <Settings className="h-4 w-4 mr-2" /> Configure API
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -84,14 +114,6 @@ const ServerList = () => {
           )}
         </div>
       </div>
-      
-      {!isApiConnected && (
-        <Card className="bg-blue-500/10 border-blue-500/20 mb-6">
-          <CardContent className="p-4 text-sm">
-            You're viewing demo servers. Configure the XManage API in the admin panel for real server management.
-          </CardContent>
-        </Card>
-      )}
       
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="mb-6">
