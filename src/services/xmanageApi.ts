@@ -1,9 +1,8 @@
-
 // XManage API service
 // Documentation: https://xmanage-docs.tirito.de/guides/using_api
 
-// API Base URL - in a real implementation, this would be stored in an environment variable
-const API_BASE_URL = 'https://xmanage-api.tirito.de'; // Replace with actual API URL
+// API Base URL - configurable via settings
+let API_BASE_URL = localStorage.getItem('xmanageApiUrl') || 'https://xmanage-api.tirito.de'; // Default URL
 
 // API Key - in a real implementation, this would be retrieved from a secure storage
 let apiKey: string | null = localStorage.getItem('xmanageApiKey');
@@ -24,6 +23,17 @@ const getHeaders = () => {
 export const setApiKey = (key: string) => {
   apiKey = key;
   localStorage.setItem('xmanageApiKey', key);
+};
+
+// Set API URL
+export const setApiUrl = (url: string) => {
+  API_BASE_URL = url;
+  localStorage.setItem('xmanageApiUrl', url);
+};
+
+// Get current API URL
+export const getApiUrl = (): string => {
+  return API_BASE_URL;
 };
 
 // Clear API Key
@@ -394,4 +404,6 @@ export default {
   setApiKey,
   clearApiKey,
   hasApiKey,
+  setApiUrl,
+  getApiUrl,
 };

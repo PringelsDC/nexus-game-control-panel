@@ -2,8 +2,24 @@
 // User API service
 // This service handles communication with the MySQL database for user management
 
-// Base URL for the user API
-const API_BASE_URL = '/api/users'; // Replace with your actual API endpoint
+// Base URL for the user API - configurable via settings
+let API_BASE_URL = localStorage.getItem('dbApiUrl') || '/api/users'; 
+
+// Set Database API URL
+export const setDbApiUrl = (url: string) => {
+  API_BASE_URL = url;
+  localStorage.setItem('dbApiUrl', url);
+};
+
+// Get current Database API URL
+export const getDbApiUrl = (): string => {
+  return API_BASE_URL;
+};
+
+// Check if DB API URL is configured to a custom value
+export const hasCustomDbUrl = (): boolean => {
+  return localStorage.getItem('dbApiUrl') !== null;
+};
 
 // User interface
 export interface User {
@@ -17,81 +33,80 @@ export interface User {
   servers: number;
 }
 
-// Get all users
+// Get all users - this will use the real API when configured
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    // In a real implementation, this would call your backend API
-    // For now, we'll return mock data
-    const mockUsers = [
-      {
-        id: '1',
-        username: 'Admin',
-        email: 'admin@example.com',
-        role: 'admin' as const,
-        serverLimit: 10,
-        subscription: 'premium',
-        lastActive: '2025-05-03T10:30:00Z',
-        servers: 1
-      },
-      {
-        id: '2',
-        username: 'User',
-        email: 'user@example.com',
-        role: 'user' as const,
-        serverLimit: 3,
-        subscription: 'basic',
-        lastActive: '2025-05-02T15:45:00Z',
-        servers: 2
-      },
-      {
-        id: '3',
-        username: 'GameMaster',
-        email: 'gamemaster@example.com',
-        role: 'user' as const,
-        serverLimit: 5,
-        subscription: 'premium',
-        lastActive: '2025-05-01T09:15:00Z',
-        servers: 3
-      },
-      {
-        id: '4',
-        username: 'FreeUser',
-        email: 'free@example.com',
-        role: 'user' as const,
-        serverLimit: 1,
-        subscription: null,
-        lastActive: '2025-04-28T14:20:00Z',
-        servers: 1
-      },
-      {
-        id: '5',
-        username: 'ProGamer',
-        email: 'progamer@example.com',
-        role: 'user' as const,
-        serverLimit: 5,
-        subscription: 'premium',
-        lastActive: '2025-05-03T08:10:00Z',
-        servers: 0
+    // Check if we should use the API or mock data
+    if (hasCustomDbUrl()) {
+      const response = await fetch(API_BASE_URL, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.status}`);
       }
-    ];
-    
-    return mockUsers;
-    
-    // Uncomment this code when your backend is ready:
-    /*
-    const response = await fetch(API_BASE_URL, {
-      headers: {
-        'Content-Type': 'application/json',
-        // Add authentication headers as needed
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch users: ${response.status}`);
+      
+      return await response.json();
+    } else {
+      // For now, we'll return mock data if no custom DB URL is set
+      console.warn('No custom DB URL configured. Using mock data.');
+      const mockUsers = [
+        {
+          id: '1',
+          username: 'Admin',
+          email: 'admin@example.com',
+          role: 'admin' as const,
+          serverLimit: 10,
+          subscription: 'premium',
+          lastActive: '2025-05-03T10:30:00Z',
+          servers: 1
+        },
+        {
+          id: '2',
+          username: 'User',
+          email: 'user@example.com',
+          role: 'user' as const,
+          serverLimit: 3,
+          subscription: 'basic',
+          lastActive: '2025-05-02T15:45:00Z',
+          servers: 2
+        },
+        {
+          id: '3',
+          username: 'GameMaster',
+          email: 'gamemaster@example.com',
+          role: 'user' as const,
+          serverLimit: 5,
+          subscription: 'premium',
+          lastActive: '2025-05-01T09:15:00Z',
+          servers: 3
+        },
+        {
+          id: '4',
+          username: 'FreeUser',
+          email: 'free@example.com',
+          role: 'user' as const,
+          serverLimit: 1,
+          subscription: null,
+          lastActive: '2025-04-28T14:20:00Z',
+          servers: 1
+        },
+        {
+          id: '5',
+          username: 'ProGamer',
+          email: 'progamer@example.com',
+          role: 'user' as const,
+          serverLimit: 5,
+          subscription: 'premium',
+          lastActive: '2025-05-03T08:10:00Z',
+          servers: 0
+        }
+      ];
+      
+      return mockUsers;
     }
-    
-    return await response.json();
-    */
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
@@ -241,5 +256,8 @@ export default {
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  setDbApiUrl,
+  getDbApiUrl,
+  hasCustomDbUrl
 };
