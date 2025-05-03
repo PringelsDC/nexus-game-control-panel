@@ -11,7 +11,9 @@ import {
   Network, 
   FileText,
   Play,
-  ArrowRight
+  ArrowRight,
+  Terminal,
+  Folder
 } from 'lucide-react';
 
 const Index = () => {
